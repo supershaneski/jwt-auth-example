@@ -98,6 +98,13 @@ Once both apps are running, open the client in your browser (`http://<your_local
    When the **access token expires**, you’ll see the same 401 again — this time, the client will automatically call the token refresh endpoint.  
    (You can adjust the expiry time — see **[Token & Cookie Expiration](#token--cookie-expiration)** below.)
 
+   Please note that there is also a simulated delay in `/api/products` to test **retry** and **timeout** behavior on the client. To disable it, comment out this line:
+
+   **apps/server/src/stubs/products.js**
+   ```js
+   await sleep(delay)
+   ```
+
 3. **Token refresh** (`POST /api/refresh`) →  
    When the access token expires, the client calls `/api/refresh`.  
    You’ll see the **refresh token** included in the request, and the response will again contain both new cookies (`Set-Cookie` headers).  

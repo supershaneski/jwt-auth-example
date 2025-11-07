@@ -1,0 +1,31 @@
+{
+  "name": "jwt-auth-example",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A demo monorepo showing JWT authentication via HttpOnly cookie using Express and Vite.",
+  "workspaces": [
+    "apps/*",
+    "shared"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace=apps/server run dev",
+    "dev:client": "npm --workspace=apps/client run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "keywords": [
+    "jwt",
+    "authentication",
+    "auth",
+    "cookie",
+    "httpOnly",
+    "express",
+    "react",
+    "example",
+    "demo"
+  ],
+  "author": "supershaneski",
+  "license": "MIT"
+}

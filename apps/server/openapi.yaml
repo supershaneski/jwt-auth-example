@@ -1,0 +1,387 @@
+openapi: 3.1.1
+info:
+  title: Demo API Server
+  description: Demonstrates secure JWT authentication using HTTP-only cookies
+  version: 'v1'
+servers:
+  - url: https://your-bff.com
+    description: Production server
+paths:
+  /api/login:
+    post:
+      operationId: Login
+      tags:
+        - Authentication
+      summary: User Login
+      description: |
+        Authenticate user with username/password.
+        On success, sets `accessToken` and `refreshToken` in HTTP-only cookies.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: alice
+              password: secret123
+      responses:
+        '200':
+          description: Login successful - JWT tokens set in HTTP-only cookies
+          headers:
+            Set-Cookie:
+              description: |
+                Two HTTP-only cookies:
+                - `accessToken`: short-lived JWT (15 min)
+                - `refreshToken`: long-lived token, only sent to `/api/refresh`
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.x; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=900
+                - refreshToken=rt_abc123def456ghi789; Path=/api/refresh; HttpOnly; Secure; SameSite=Strict; Max-Age=604800
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  $ref: '#/components/examples/LoginResponseSuccess'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                badRequest:
+                  $ref: '#/components/examples/ErrorResponseBadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  $ref: '#/components/examples/ErrorResponseUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  $ref: '#/components/examples/ErrorResponseNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  $ref: '#/components/examples/ErrorResponseServerError'
+  /api/logout:
+    post:
+      operationId: Logout
+      tags:
+        - Authentication
+      summary: Logout
+      description: Clears JWT cookies. Optionally revokes refresh token.
+      security: []  # Public (anyone can logout)
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  $ref: '#/components/examples/ErrorResponseServerError'
+  /api/refresh:
+    post:
+      operationId: Refresh
+      tags:
+        - Authentication
+      summary: Refresh Access Token
+      description: |
+        Uses `refreshToken` cookie to issue a new `accessToken`.
+        Must include valid `refreshToken` cookie (sent automatically if Path matches).
+      security:
+        - RefreshCookieAuth: []
+      responses:
+        '200':
+          description: New access token issued via cookie
+          headers:
+            Set-Cookie:
+              description: New short-lived access token
+              schema:
+                type: string
+              example: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.y; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=900
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+              examples:
+                success:
+                  $ref: '#/components/examples/RefreshResponseSuccess'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                badRequest:
+                  $ref: '#/components/examples/ErrorResponseBadRequest'
+        '401':
+          description: Unauthorized - invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  $ref: '#/components/examples/ErrorResponseUnauthorized'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  $ref: '#/components/examples/ErrorResponseServerError'
+  /api/products:
+    get:
+      operationId: GetProducts
+      security:
+        - CookieAuth: []
+      tags:
+        - Product
+      summary: Get Product List
+      description: Retrieve list of products. Requires valid `accessToken` cookie.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProductsResponse'
+              examples:
+                success:
+                  $ref: '#/components/examples/GetProductsResponseSuccess'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                badRequest:
+                  $ref: '#/components/examples/ErrorResponseBadRequest'
+        '401':
+          description: Unauthorized - missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  $ref: '#/components/examples/ErrorResponseUnauthorized'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  $ref: '#/components/examples/ErrorResponseServerError'
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: |
+        **HTTP-only cookie** containing the JWT access token.
+        - Sent automatically on same-origin requests
+        - Expires in 15 minutes
+        - Claims: `sub`, `iat`, `exp`, `role`
+        - Use `/api/refresh` when expired
+    RefreshCookieAuth:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: |
+        **HTTP-only cookie** used only for token refresh.
+        - Only sent to `/api/refresh`
+        - Long-lived (7 days)
+        - Never exposed to JavaScript
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        created:
+          type: integer
+          description: UTC timestamp in milliseconds
+          example: 1759974176938
+        error:
+          type: string
+          example: INTERNAL_SERVER_ERROR
+        message:
+          type: string
+          example: An unexpected error occurred
+      required:
+        - status
+        - created
+        - error
+        - message
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Login username
+          example: alice
+        password:
+          type: string
+          description: Password
+          example: secret123
+      required:
+        - username
+        - password
+    LoginResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        created:
+          type: integer
+          example: 1759974176938
+      required:
+        - status
+        - created
+    LogoutResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        created:
+          type: integer
+          example: 1759974176938
+      required:
+        - status
+        - created
+    RefreshResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        created:
+          type: integer
+          example: 1759974176938
+      required:
+        - status
+        - created
+    GetProductsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        created:
+          type: integer
+          example: 1759974176938
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: unc0001-01
+              name:
+                type: string
+                example: Maple Table
+              price:
+                type: number
+                example: 25000
+            required:
+              - id
+              - name
+              - price
+      required:
+        - status
+        - created
+        - data
+  examples:
+    ErrorResponseBadRequest:
+      value:
+        status: error
+        created: 1759974176938
+        error: INVALID_REQUEST
+        message: Invalid request payload
+    ErrorResponseUnauthorized:
+      value:
+        status: error
+        created: 1759974176938
+        error: UNAUTHORIZED
+        message: Invalid or missing token
+    ErrorResponseNotFound:
+      value:
+        status: error
+        created: 1759974176938
+        error: NOT_FOUND
+        message: Resource not found
+    ErrorResponseServerError:
+      value:
+        status: error
+        created: 1759974176938
+        error: INTERNAL_SERVER_ERROR
+        message: An unexpected error occurred
+    LoginResponseSuccess:
+      value:
+        status: success
+        created: 1759974176938
+    RefreshResponseSuccess:
+      value:
+        status: success
+        created: 1759974176938
+    GetProductsResponseSuccess:
+      value:
+        status: success
+        created: 1759974176938
+        data:
+          - id: unc0001-01
+            name: Maple Table
+            price: 25000
+          - id: unc0002-01
+            name: Oak Chair
+            price: 12000
+security: []
+tags:
+  - name: Authentication
+    x-displayName: Authentication
+    description: Login, refresh, and auth flows
+  - name: Product
+    x-displayName: Product
+    description: Product catalog endpoints

@@ -1,0 +1,27 @@
+# Node
+node_modules/
+apps/*/node_modules/
+
+# Build outputs
+dist/
+build/
+apps/*/dist/
+apps/*/build/
+
+# Env and logs
+.env
+*.log
+
+# Editor and system files
+.vscode/
+.DS_Store
+
+
+# My ignore list
+apps/*/_bin
+*.bu.html
+*.bu.json
+*.bu.css
+*.bu.jsx
+*.bu.js
+*.bu.md

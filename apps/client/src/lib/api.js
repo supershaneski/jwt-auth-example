@@ -29,7 +29,7 @@ export const fetchWithCred = async (url, options = {}, { retries = 1, timeout = 
     } catch (err) {
       clearTimeout(timer)
       if (err.name === 'AbortError') {
-        console.error('Request timed out after', timeout, 'ms')
+        console.error('Request timed out after', `${timeout} ms`)
       }
       if (n < retries && (err.name === 'AbortError' || err.name === 'TypeError')) {
         const delay = baseDelay * 2 ** n + Math.random() * 100

@@ -18,7 +18,8 @@ apps/*/build/
 
 
 # My ignore list
-apps/*/_bin
+_bin/
+apps/*/_bin/
 *.bu.html
 *.bu.json
 *.bu.css

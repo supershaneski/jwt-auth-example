@@ -109,6 +109,14 @@ graph TD
 3. Click "Get Products" → works!
 4. Wait 2 minutes → access token expires → auto-refreshed!
 
+> [!Note]
+> Please note that there is also a simulated delay in `/api/products` to test **retry** and **timeout** behavior on the client. To disable it, comment out this line:
+> 
+> **apps/server/src/stubs/products.js**
+> ```js
+> await sleep(delay)
+> ```
+
 ## Security Details
 
 ### JWT Creation

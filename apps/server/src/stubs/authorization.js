@@ -76,12 +76,15 @@ export const refreshHandler = async (c, req, res) => {
 
   const { accessToken, refreshToken } = await createTokens(user)
 
+  const ACCESS_COOKIE_EXPIRY = ACCESS_TOKEN_EXPIRY * 1000
+  const REFRESH_COOKIE_EXPIRY = REFRESH_TOKEN_EXPIRY * 1000
+
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
-    maxAge: ACCESS_TOKEN_EXPIRY,
+    maxAge: ACCESS_COOKIE_EXPIRY,
   })
 
   res.cookie('refreshToken', refreshToken, {
@@ -89,7 +92,7 @@ export const refreshHandler = async (c, req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/api/refresh',
-    maxAge: REFRESH_TOKEN_EXPIRY,
+    maxAge: REFRESH_COOKIE_EXPIRY,
   })
 
   return res.status(200).json({

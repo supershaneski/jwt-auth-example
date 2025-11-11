@@ -231,7 +231,7 @@ You can verify this at the **Response Cookies** in the client.
 
 
 ## CSRF Token
-Using **HttpOnly cookies** for JWT (or session) storage protects against **XSS token theft**, but leaves you vulnerable to **Cross-Site Request Forgery (CSRF)** attacks. In a CSRF attack, a malicious site tricks an authenticated user's, logged-in user's browser into making an unwanted request to your app — and the browser automatically attaches **HttpOnly cookies**.
+Using **HttpOnly cookies** for JWT (or session) storage protects against **XSS token theft**, but leaves you vulnerable to **Cross-Site Request Forgery (CSRF)** attacks. In a CSRF attack, a malicious site tricks an authenticated user's browser into making an unwanted request to your app — and the browser automatically attaches **HttpOnly cookies**.
 
 To mitigate this, we use the **double-submit cookie pattern** with a **non-HttpOnly CSRF token**.
 

@@ -55,7 +55,7 @@ cp apps/client/.env.example apps/client/.env
 JWT_ACCESS_SECRET=your-super-secret-jwt-access-key-256-bits-here
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-256-bits-here
 ACCESS_TOKEN_EXPIRY=120      # seconds (2 minutes)
-REFRESH_TOKEN_EXPIRY=604800  # seconds (7 days recommended in prod)
+REFRESH_TOKEN_EXPIRY=300  # seconds (5 minutes for testing)
 NODE_ENV=development
 PORT=3000
 ```

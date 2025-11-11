@@ -299,22 +299,5 @@ if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
 
 Since a malicious site cannot read the cookies set for your domain, and cannot arbitrarily send custom headers with an authentic request due to browser security policies (like the **Same-Origin Policy** and **CORS** restrictions), the attacker cannot retrieve and attach the correct **CSRF token**. As a result, the attack fails.
 
-## Folder Structure
 
-```
-jwt-auth-example/
-├── apps/
-│   ├── server/              # Express backend
-│   │   ├── src/
-│   │   │   ├── routes/
-│   │   │   ├── middleware/jwt.js
-│   │   │   └── cors/origins.js
-│   │   └── .env
-│   └── client/              # Vite + React
-│       ├── src/
-│       │   ├── api/
-│       │   └── components/
-│       └── .env
-├── package.json
-└── README.md
-```
+---

@@ -43,14 +43,25 @@ export const fetchWithCred = async (url, options = {}, { retries = 1, timeout = 
   return attempt(0)
 }
 
-export const fetchWithRefresh = async (url, options = {}, { retries = 1, timeout = 8000 } = {}) => {
+export const fetchWithRefresh = async (url, options = {}, { retries = 1, timeout = 8000 } = {}, csrfToken = '') => {
   let response = await fetchWithCred(url, options, { retries, timeout })
 
   if (response.status === 401) {
     console.log('Access token expired, trying refresh...')
-    const refreshRes = await fetchWithCred(`${import.meta.env.VITE_API_BASE_URL}/api/refresh`, { method: 'POST' }, { retries, timeout })
+    const refreshRes = await fetchWithCred(`${import.meta.env.VITE_API_BASE_URL}/api/refresh`, 
+      { 
+        method: 'POST',
+        ...(csrfToken && { headers: { 'x-csrf-token': csrfToken }})
+      }, { retries, timeout })
     if (refreshRes.ok) {
       console.log('Refresh succeeded, retrying original request...')
+
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrfToken='))
+        ?.split('=')[1]
+      console.log('CSRF-TOKEN', csrfToken)
+
       response = await fetchWithCred(url, options, { retries, timeout })
     } else {
       console.log('Refresh failed, user must log in again')

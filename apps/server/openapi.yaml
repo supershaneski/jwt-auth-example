@@ -119,6 +119,8 @@ paths:
         Uses `refreshToken` cookie to issue a new `accessToken`.
         Must include valid `refreshToken` cookie (sent automatically if Path matches).
       security:
+        - CSRFCookieAuth: []
+        - CSRFHeaderAuth: []
         - RefreshCookieAuth: []
       responses:
         '200':
@@ -230,6 +232,14 @@ components:
         - Only sent to `/api/refresh`
         - Long-lived (7 days)
         - Never exposed to JavaScript
+    CSRFHeaderAuth:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+    CSRFCookieAuth:
+      type: apiKey
+      in: cookie
+      name: csrfToken
   schemas:
     ErrorResponse:
       type: object

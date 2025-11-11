@@ -10,6 +10,7 @@ function App() {
 
   const [isLogin, setIsLogin] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [csrfToken, setCsrfToken] = React.useState('')
 
   const handleLogin = async () => {
     try {
@@ -26,8 +27,17 @@ function App() {
         const data = await response.json()
         throw new ApiError(data.message || 'Login failed', response.status, data)
       }
+
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrfToken='))
+        ?.split('=')[1]
+
+      setCsrfToken(token)
+
       const result = await response.json()
       console.log('[Client] Login response:', result)
+
       setIsLogin(true)
     } catch(err) {
       if (err instanceof ApiError) {
@@ -47,7 +57,8 @@ function App() {
       setIsLoading(true)
       const url = `${import.meta.env.VITE_API_BASE_URL}/api/logout`
       const response = await fetchWithCred(url, {
-        method: 'POST'
+        method: 'POST',
+        //...(csrfToken && { headers: { 'x-csrf-token': csrfToken }})
       })
       if (!response.ok) {
         const data = await response.json()
@@ -73,11 +84,45 @@ function App() {
     try {
       setIsLoading(true)
       const url = `${import.meta.env.VITE_API_BASE_URL}/api/products`
-      const response = await fetchWithRefresh(url,{},{ retries: 5 })
+      const response = await fetchWithRefresh(url,{},{ retries: 5 }, csrfToken)
       if (!response.ok) {
         const data = await response.json()
         throw new ApiError(data.message || 'Failed to get products', response.status, data)
       }
+      const result = await response.json()
+      console.log('[Client] Get Products response:', result)
+    } catch(err) {
+      if (err instanceof ApiError) {
+        console.log('[Client] API Error:', err.message)
+        console.log('[Client] Status:', err.statusCode)
+        console.log('[Client] Details:', err.details)
+      } else {
+        console.log('[Client] Unexpected error:', err)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRefresh = async () => {
+    try {
+      setIsLoading(true)
+      const url = `${import.meta.env.VITE_API_BASE_URL}/api/refresh`
+      const response = await fetchWithCred(url,{ 
+        method: 'POST',
+        ...(csrfToken && { headers: { 'x-csrf-token': csrfToken }})
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new ApiError(data.message || 'Failed to refresh', response.status, data)
+      }
+
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrfToken='))
+        ?.split('=')[1]
+      setCsrfToken(token)
+      
       const result = await response.json()
       console.log('[Client] Get Products response:', result)
     } catch(err) {
@@ -105,6 +150,7 @@ function App() {
         )
       }
       <button onClick={handleProducts} disabled={isLoading}>{ isLoading && <Spinner /> }Get Products</button>
+      <button onClick={handleRefresh} disabled={isLoading}>{ isLoading && <Spinner /> }Refresh</button>
     </div>
   )
 }

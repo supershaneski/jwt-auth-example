@@ -13,6 +13,8 @@ import errorLoggerMiddleware from './middleware/errorLogger.js'
 import loggerMiddleware from './middleware/logger.js'
 import jwtAuth from './middleware/jwtAuth.js'
 import refreshAuth from './middleware/refreshAuth.js'
+import csrfCookieAuth from './middleware/csrfCookieAuth.js'
+import csrfHeaderAuth from './middleware/csrfHeaderAuth.js'
 
 import origins from './cors/origins.js'
 
@@ -37,8 +39,8 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-TOKEN', 'X-Requested-With'],
 }))
 
 // Logger middleware
@@ -84,6 +86,7 @@ api.register({
     })
   },
   /*
+  // NOTE:
   // Use this instead if you want to show error for unimplemented endpoints
   notImplemented: (c, req, res) => {
     console.error(`MISSING HANDLER: ${c.operation.operationId}`);  // LOG IT
@@ -100,12 +103,15 @@ api.register({
 // Register security handlers
 api.registerSecurityHandler('CookieAuth', jwtAuth)
 api.registerSecurityHandler('RefreshCookieAuth', refreshAuth)
+api.registerSecurityHandler('CSRFHeaderAuth', csrfHeaderAuth)
+api.registerSecurityHandler('CSRFCookieAuth', csrfCookieAuth)
+
 
 api.register('unauthorizedHandler', async (c, req, res) => {
   return res.status(401).json({
     status: 'error',
     created: Date.now(),
-    error: 'UNAUTHORIZED',
+    error: c.securityError || 'UNAUTHORIZED',
     message: 'Invalid access',
   })
 })

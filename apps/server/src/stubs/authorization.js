@@ -1,11 +1,12 @@
+import { randomUUID } from 'crypto'
 import { createTokens } from '../jwt/createToken.js'
 
 const users = {
   alice: { id: 'u1', username: 'alice', password: 'secret123', role: 'user' },
 }
 
-const ACCESS_TOKEN_EXPIRY = Number(process.env.ACCESS_TOKEN_EXPIRY || 120)
-const REFRESH_TOKEN_EXPIRY = Number(process.env.REFRESH_TOKEN_EXPIRY || 300)
+const ACCESS_COOKIE_EXPIRY = Number(process.env.ACCESS_TOKEN_EXPIRY || 120) * 1000
+const REFRESH_COOKIE_EXPIRY = Number(process.env.REFRESH_TOKEN_EXPIRY || 300) * 1000
 
 export const loginHandler = async (c, req, res) => {
   const { username, password } = req.body
@@ -22,8 +23,7 @@ export const loginHandler = async (c, req, res) => {
 
   const { accessToken, refreshToken } = await createTokens(user)
 
-  const ACCESS_COOKIE_EXPIRY = ACCESS_TOKEN_EXPIRY * 1000
-  const REFRESH_COOKIE_EXPIRY = REFRESH_TOKEN_EXPIRY * 1000
+  const csrfToken = randomUUID()
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -41,11 +41,18 @@ export const loginHandler = async (c, req, res) => {
     maxAge: REFRESH_COOKIE_EXPIRY,
   })
 
+  res.cookie('csrfToken', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: REFRESH_COOKIE_EXPIRY,
+  })
+
   return res.status(200).json({
     status: 'success',
     created: Date.now(),
   })
-
 }
 
 export const logoutHandler = async (c, req, res) => {
@@ -64,11 +71,17 @@ export const logoutHandler = async (c, req, res) => {
     path: '/api/refresh',
   })
 
+  res.clearCookie('csrfToken', {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  })
+
   return res.status(200).json({
     status: 'success',
     created: Date.now(),
   })
-
 }
 
 export const refreshHandler = async (c, req, res) => {
@@ -76,8 +89,7 @@ export const refreshHandler = async (c, req, res) => {
 
   const { accessToken, refreshToken } = await createTokens(user)
 
-  const ACCESS_COOKIE_EXPIRY = ACCESS_TOKEN_EXPIRY * 1000
-  const REFRESH_COOKIE_EXPIRY = REFRESH_TOKEN_EXPIRY * 1000
+  const csrfToken = randomUUID()
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -91,6 +103,14 @@ export const refreshHandler = async (c, req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
+    path: '/api/refresh',
+    maxAge: REFRESH_COOKIE_EXPIRY,
+  })
+
+  res.cookie('csrfToken', csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     path: '/api/refresh',
     maxAge: REFRESH_COOKIE_EXPIRY,
   })

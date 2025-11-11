@@ -106,6 +106,17 @@ Runs:
 ## How It Works
 From the client, open the browser **DevTools** and check the **Network** tab.
 
+> [!Note]
+> Be sure to set `credentials: 'include'` in the fetch options so the browser will send and store cookies.
+> ```js
+> const response = await fetch(url, {
+>   method: 'POST',
+>   headers: { 'Content-Type': 'application/json' },
+>   credentials: 'include', // <-- important
+>   ...
+> })
+> ```
+
 ### Auth Flow Overview
 
 **1. Login** `POST /api/login` →  

@@ -185,7 +185,7 @@ const { payload } = await jwtVerify(token, secret, {
 console.log(payload)
 ```
 
-If you request a protected route before logging **in**, or after the **accessToken** cookie has expired, **no cookies will be attached**, and you will get a **401 Unauthorized** response. This is where we will handle **token refreshn**.
+If you request a protected route before logging **in**, or after the **accessToken** cookie has expired, **no cookies will be attached**, and you will get a **401 Unauthorized** response. This is where we will handle **token refresh**.
 
 > [!NOTE]
 > A **protected route** is a route or endpoint that is under some security scheme and requires **authentication**.
@@ -203,7 +203,7 @@ However, we also set expiration in our **refreshToken** cookie so if we request 
 If the **refreshToken** cookie is still valid, we will receive new **accessToken** and **refreshToken** cookies.
 
 **4. Logout** `POST /api/logout` →  
-In this example, logout is not a **protected route**. As such, there will be no cookies sent with the request. The logout handler in the backend will reset the cookies in the response.
+In this example, logout is not a **protected route**. As such, there will be no cookies sent with the request. Even so, the logout handler in the backend will reset the cookies in the response.
 
 ```js
 res.clearCookie('accessToken', {
